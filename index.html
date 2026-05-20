@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F5E6CA">
+  <meta name="description" content="Ale Music Box — biblioteca musical privada">
+  <title>Ale Music Box</title>
+  <link rel="preconnect" href="https://api-musica.a-cambon.workers.dev">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rye&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="login-screen" class="login-screen" aria-hidden="false">
+    <div class="login-card md-surface">
+      <div class="login-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-8z"/>
+        </svg>
+      </div>
+      <h1 class="login-title">Ale Music Box</h1>
+      <p class="login-subtitle">Introduce la contraseña para continuar</p>
+      <form id="login-form" class="login-form" autocomplete="off">
+        <label class="md-field">
+          <span class="md-field-label">Contraseña</span>
+          <input
+            type="password"
+            id="login-password"
+            class="md-input"
+            placeholder="Contraseña"
+            required
+            autocomplete="current-password"
+          >
+        </label>
+        <p id="login-error" class="login-error" role="alert" hidden>Contraseña incorrecta</p>
+        <button type="submit" class="md-btn md-btn-filled">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="app" class="app" hidden>
+    <header class="top-bar md-surface-elevated">
+      <div class="top-bar-inner">
+        <div class="theme-selector" role="group" aria-label="Seleccionar tema">
+          <button type="button" class="theme-chip" data-theme="ocre" aria-label="Tema Ocre" title="Ocre"><span class="theme-chip-abbr">O</span><span class="theme-chip-name">Ocre</span></button>
+          <button type="button" class="theme-chip" data-theme="bosque" aria-label="Tema Bosque" title="Bosque"><span class="theme-chip-abbr">B</span><span class="theme-chip-name">Bosque</span></button>
+          <button type="button" class="theme-chip" data-theme="mar" aria-label="Tema Mar" title="Mar"><span class="theme-chip-abbr">M</span><span class="theme-chip-name">Mar</span></button>
+          <button type="button" class="theme-chip" data-theme="lavanda" aria-label="Tema Lavanda" title="Lavanda"><span class="theme-chip-abbr">L</span><span class="theme-chip-name">Lavanda</span></button>
+        </div>
+        <h1 class="app-brand">Ale Music Box</h1>
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+          <input
+            type="search"
+            id="search-input"
+            class="search-input search-input--compact"
+            placeholder="Buscar…"
+            aria-label="Buscar en la biblioteca"
+            autocomplete="off"
+          >
+        </div>
+      </div>
+    </header>
+
+    <main class="library" id="library" aria-label="Biblioteca musical"></main>
+
+    <section id="eq-panel" class="eq-panel md-surface-elevated" hidden>
+      <div class="eq-header">
+        <h2>Ecualizador</h2>
+        <button type="button" id="eq-reset" class="md-btn md-btn-text">Restablecer</button>
+        <button type="button" id="eq-close" class="md-btn md-btn-icon" aria-label="Cerrar ecualizador">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="eq-sliders" id="eq-sliders" aria-label="Ecualizador de 10 bandas"></div>
+    </section>
+
+    <footer class="player-bar md-surface-elevated" id="player-bar">
+      <div class="player-now-playing">
+        <p id="player-title" class="player-title">Selecciona una canción</p>
+        <p id="player-artist" class="player-artist"></p>
+        <p id="player-error" class="player-error" role="alert" hidden></p>
+      </div>
+      <div class="player-progress">
+        <span id="time-current" class="time-label">0:00</span>
+        <input type="range" id="progress-bar" class="progress-range" min="0" max="100" value="0" step="0.1" aria-label="Posición de reproducción">
+        <span id="time-duration" class="time-label">0:00</span>
+      </div>
+      <div class="player-controls">
+        <button type="button" id="btn-eq" class="md-btn md-btn-icon" aria-label="Abrir ecualizador" title="Ecualizador">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zM16 9v11h4V9h-4z"/></svg>
+        </button>
+        <button type="button" id="btn-rewind" class="md-btn md-btn-icon" aria-label="Retroceder 10 segundos">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+        </button>
+        <button type="button" id="btn-play" class="md-btn md-btn-fab" aria-label="Reproducir">
+          <svg id="icon-play" class="btn-play-icon btn-play-icon--play" viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="icon-pause" class="btn-play-icon btn-play-icon--pause" viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button type="button" id="btn-forward" class="md-btn md-btn-icon" aria-label="Adelantar 10 segundos">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <audio id="audio" preload="metadata" playsinline></audio>
+  <script src="app.js" defer></script>
+</body>
+</html>
