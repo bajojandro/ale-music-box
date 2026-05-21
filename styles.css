@@ -618,15 +618,16 @@ img {
   position: fixed;
   z-index: 130;
   top: calc(var(--top-bar-height) + 10px);
-  left: 12px;
-  right: 12px;
-  max-width: 420px;
+  left: 8px;
+  right: 8px;
+  width: auto;
+  max-width: min(100% - 16px, 400px);
   margin: 0 auto;
   padding: 0;
   border: 1px solid var(--color-outline);
   border-radius: var(--md-radius-xl);
   box-shadow: var(--md-elevation-3);
-  max-height: min(58dvh, 360px);
+  max-height: min(52dvh, 320px);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -660,38 +661,51 @@ img {
 .eq-sliders {
   display: flex;
   justify-content: space-between;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 8px 14px 20px;
-  -webkit-overflow-scrolling: touch;
+  align-items: flex-end;
+  gap: 1px;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  padding: 6px 6px 14px;
+  scrollbar-width: none;
+}
+
+.eq-sliders::-webkit-scrollbar {
+  display: none;
+  height: 0;
 }
 
 .eq-band {
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  min-width: 32px;
-  padding-bottom: 8px;
-  flex-shrink: 0;
+  gap: 4px;
+  min-width: 0;
+  max-width: 9.5%;
+  padding-bottom: 4px;
 }
 
 .eq-band label {
-  font-size: 0.6rem;
-  font-weight: 600;
+  font-size: 0.48rem;
+  font-weight: 700;
   color: var(--color-primary);
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  height: 32px;
+  height: 22px;
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
 .eq-slider {
   -webkit-appearance: none;
   appearance: none;
-  width: 36px;
-  height: 132px;
-  min-height: 132px;
+  width: 100%;
+  max-width: 26px;
+  height: 118px;
+  min-height: 118px;
   margin: 0;
+  padding: 0;
   writing-mode: vertical-lr;
   direction: rtl;
   background: transparent;
@@ -708,27 +722,44 @@ img {
 
 .eq-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
-  margin-left: -7px;
+  width: 18px;
+  height: 18px;
+  margin-left: -5px;
   border-radius: 50%;
   background: var(--color-primary);
   box-shadow: var(--md-elevation-2);
 }
 
 .eq-slider::-moz-range-track {
-  width: 8px;
+  width: 6px;
   background: var(--color-surface-variant);
   border-radius: var(--md-radius-full);
 }
 
 .eq-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border: none;
   border-radius: 50%;
   background: var(--color-primary);
   box-shadow: var(--md-elevation-2);
+}
+
+@media (min-width: 380px) {
+  .eq-sliders {
+    gap: 3px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .eq-band label {
+    font-size: 0.52rem;
+    height: 24px;
+  }
+
+  .eq-slider {
+    max-width: 28px;
+  }
 }
 
 .player-error {
