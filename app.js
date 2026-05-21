@@ -178,7 +178,7 @@ function flattenTracks(album) {
 function initEqualizer() {
   if (state.eqReady) return true;
   try {
-    dom.audio.crossOrigin = 'anonymous';
+    if (!dom.audio.crossOrigin) dom.audio.crossOrigin = 'anonymous';
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     audioSource = audioContext.createMediaElementSource(dom.audio);
     let prev = audioSource;
@@ -192,7 +192,10 @@ function initEqualizer() {
       prev = f;
       return f;
     });
-    prev.connect(audioContext.destination);
+    const masterGain = audioContext.createGain();
+    masterGain.gain.value = 1;
+    prev.connect(masterGain);
+    masterGain.connect(audioContext.destination);
     state.eqReady = true;
     loadEqFromStorage();
     return true;
@@ -203,7 +206,35 @@ function initEqualizer() {
 }
 
 async function resumeAudioContext() {
-  if (audioContext?.state === 'suspended') await audioContext.resume();
+  if (!audioContext) return;
+  if (audioContext.state === 'suspended') await audioContext.resume();
+}
+
+/** Activa el grafo Web Audio y recupera el sonido si estaba reproduciendo */
+async function activateEqualizer() {
+  if (state.eqReady) {
+    await resumeAudioContext();
+    return true;
+  }
+
+  const wasPlaying = !dom.audio.paused && dom.audio.currentTime > 0;
+  const savedTime = dom.audio.currentTime;
+
+  if (!initEqualizer()) return false;
+
+  buildEqUI();
+  await resumeAudioContext();
+
+  if (wasPlaying) {
+    dom.audio.currentTime = savedTime;
+    try {
+      await dom.audio.play();
+    } catch (e) {
+      console.warn('EQ: reanudar tras conectar grafo', e);
+    }
+  }
+
+  return true;
 }
 
 function loadEqFromStorage() {
@@ -247,6 +278,7 @@ function buildEqUI() {
     slider.step = '0.5';
     slider.value = String(eqFilters[i]?.gain.value ?? EQ_DEFAULT_DB);
     slider.addEventListener('input', () => {
+      resumeAudioContext();
       const db = parseFloat(slider.value);
       if (eqFilters[i]) eqFilters[i].gain.value = db;
       saveEqToStorage();
@@ -373,8 +405,12 @@ async function playAudio() {
   }
 
   if (state.eqEnabled) {
-    initEqualizer();
-    await resumeAudioContext();
+    if (!state.eqReady) {
+      const ok = await activateEqualizer();
+      if (!ok) showPlayerError('Ecualizador no disponible. Recarga la página.');
+    } else {
+      await resumeAudioContext();
+    }
   }
 
   try {
@@ -670,16 +706,18 @@ function handleLogin(e) {
   }
 }
 
-function toggleEqPanel(open) {
+async function toggleEqPanel(open) {
   const on = open ?? dom.eqPanel.hidden;
   dom.eqPanel.hidden = !on;
   dom.app.classList.toggle('eq-open', on);
   if (on) {
     state.eqEnabled = true;
-    if (!initEqualizer()) {
-      showPlayerError('Ecualizador requiere CORS en el Worker.');
+    const ok = await activateEqualizer();
+    if (!ok) {
+      showPlayerError('Ecualizador no disponible (CORS). Recarga la página.');
+      return;
     }
-    buildEqUI();
+    showPlayerError('');
     eqFilters.forEach((f, i) => {
       const s = dom.eqSliders.querySelector(`#eq-${i}`);
       if (s) s.value = String(f.gain.value);
@@ -696,7 +734,9 @@ function bindEvents() {
   dom.btnPlay.addEventListener('click', togglePlayPause);
   dom.btnRewind.addEventListener('click', () => skip(-SKIP_SECONDS));
   dom.btnForward.addEventListener('click', () => skip(SKIP_SECONDS));
-  dom.btnEq.addEventListener('click', () => toggleEqPanel());
+  dom.btnEq.addEventListener('click', () => {
+    toggleEqPanel();
+  });
   dom.eqClose.addEventListener('click', () => toggleEqPanel(false));
   dom.eqReset.addEventListener('click', resetEq);
 
