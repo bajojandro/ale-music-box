@@ -34,8 +34,11 @@ const state = {
   queueIndex: -1,
   isSeeking: false,
   eqEnabled: false,
-  eqReady: false
+  eqReady: false,
+  suppressAudioErrors: false
 };
+
+let audioErrorDebounce = null;
 
 let audioContext = null;
 let audioSource = null;
@@ -147,6 +150,24 @@ function showPlayerError(msg) {
   dom.playerError.hidden = !msg;
 }
 
+function clearPlayerErrorIfPlaying() {
+  if (
+    dom.audio &&
+    !dom.audio.paused &&
+    dom.audio.currentTime > 0 &&
+    dom.audio.readyState >= 2 &&
+    !dom.audio.error
+  ) {
+    showPlayerError('');
+  }
+}
+
+function networkErrorMessage() {
+  return isLocalDev()
+    ? 'Error de red. ¿Está serve.ps1 en marcha?'
+    : 'Error de red (get-song). Revisa el Worker en Cloudflare.';
+}
+
 function flattenTracks(album) {
   const list = [];
   const add = (track, volumeName = null) => {
@@ -220,21 +241,28 @@ async function activateEqualizer() {
   const wasPlaying = !dom.audio.paused && dom.audio.currentTime > 0;
   const savedTime = dom.audio.currentTime;
 
-  if (!initEqualizer()) return false;
+  state.suppressAudioErrors = true;
+  try {
+    if (!initEqualizer()) return false;
 
-  buildEqUI();
-  await resumeAudioContext();
+    buildEqUI();
+    await resumeAudioContext();
 
-  if (wasPlaying) {
-    dom.audio.currentTime = savedTime;
-    try {
-      await dom.audio.play();
-    } catch (e) {
-      console.warn('EQ: reanudar tras conectar grafo', e);
+    if (wasPlaying) {
+      dom.audio.currentTime = savedTime;
+      try {
+        await dom.audio.play();
+      } catch (e) {
+        console.warn('EQ: reanudar tras conectar grafo', e);
+      }
     }
+    clearPlayerErrorIfPlaying();
+    return true;
+  } finally {
+    setTimeout(() => {
+      state.suppressAudioErrors = false;
+    }, 800);
   }
-
-  return true;
 }
 
 function loadEqFromStorage() {
@@ -740,26 +768,49 @@ function bindEvents() {
   dom.eqClose.addEventListener('click', () => toggleEqPanel(false));
   dom.eqReset.addEventListener('click', resetEq);
 
-  dom.audio.addEventListener('timeupdate', updateProgressUI);
+  dom.audio.addEventListener('timeupdate', () => {
+    updateProgressUI();
+    clearPlayerErrorIfPlaying();
+  });
   dom.audio.addEventListener('loadedmetadata', updateProgressUI);
-  dom.audio.addEventListener('ended', playNextInQueue);
-  dom.audio.addEventListener('play', () => setPlayIcon(true));
-  dom.audio.addEventListener('playing', () => setPlayIcon(true));
-  dom.audio.addEventListener('pause', () => setPlayIcon(false));
-  dom.audio.addEventListener('ended', () => setPlayIcon(false));
-  dom.audio.addEventListener('error', () => {
-    const code = dom.audio.error?.code;
-    let msg = 'Error al cargar el audio desde el Worker.';
-    if (code === 2) {
-      msg = 'Error de red (get-song). Reinicia serve.ps1 y revisa Deploy del Worker.';
-    } else if (code === 4) {
-      msg = isChromeBrowser()
-        ? 'Chrome no reproduce FLAC. Usa Firefox.'
-        : 'El Worker no devolvió audio válido. Prueba get-song en el navegador o redeploy.';
-    }
-    showPlayerError(msg);
+  dom.audio.addEventListener('ended', () => {
     setPlayIcon(false);
-    console.error('Audio error', code, dom.audio.currentSrc);
+    playNextInQueue();
+  });
+  dom.audio.addEventListener('play', () => {
+    setPlayIcon(true);
+    clearPlayerErrorIfPlaying();
+  });
+  dom.audio.addEventListener('playing', () => {
+    setPlayIcon(true);
+    showPlayerError('');
+  });
+  dom.audio.addEventListener('pause', () => setPlayIcon(false));
+  dom.audio.addEventListener('error', () => {
+    if (state.suppressAudioErrors) return;
+
+    clearTimeout(audioErrorDebounce);
+    audioErrorDebounce = setTimeout(() => {
+      if (state.suppressAudioErrors) return;
+      if (!dom.audio.error) return;
+      if (!dom.audio.paused && dom.audio.currentTime > 0 && dom.audio.readyState >= 2) {
+        showPlayerError('');
+        return;
+      }
+
+      const code = dom.audio.error?.code;
+      let msg = 'Error al cargar el audio desde el Worker.';
+      if (code === 2) {
+        msg = networkErrorMessage();
+      } else if (code === 4) {
+        msg = isChromeBrowser()
+          ? 'Chrome no reproduce FLAC. Usa Firefox.'
+          : 'El Worker no devolvió audio válido. Prueba get-song en el navegador o redeploy.';
+      }
+      showPlayerError(msg);
+      setPlayIcon(false);
+      console.error('Audio error', code, dom.audio.currentSrc);
+    }, 500);
   });
 
   dom.progressBar.addEventListener('pointerdown', () => {
