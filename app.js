@@ -69,6 +69,7 @@ const dom = {
   btnRewind: $('#btn-rewind'),
   btnForward: $('#btn-forward'),
   btnEq: $('#btn-eq'),
+  eqBackdrop: $('#eq-backdrop'),
   eqPanel: $('#eq-panel'),
   eqSliders: $('#eq-sliders'),
   eqReset: $('#eq-reset'),
@@ -243,13 +244,25 @@ async function activateEqualizer() {
 
   state.suppressAudioErrors = true;
   try {
-    if (!initEqualizer()) return false;
+    if (wasPlaying) dom.audio.pause();
+
+    if (!initEqualizer()) {
+      if (wasPlaying) {
+        dom.audio.currentTime = savedTime;
+        try {
+          await dom.audio.play();
+        } catch {
+          /* ignore */
+        }
+      }
+      return false;
+    }
 
     buildEqUI();
     await resumeAudioContext();
+    dom.audio.currentTime = savedTime;
 
     if (wasPlaying) {
-      dom.audio.currentTime = savedTime;
       try {
         await dom.audio.play();
       } catch (e) {
@@ -737,6 +750,10 @@ function handleLogin(e) {
 async function toggleEqPanel(open) {
   const on = open ?? dom.eqPanel.hidden;
   dom.eqPanel.hidden = !on;
+  if (dom.eqBackdrop) {
+    dom.eqBackdrop.hidden = !on;
+    dom.eqBackdrop.setAttribute('aria-hidden', on ? 'false' : 'true');
+  }
   dom.app.classList.toggle('eq-open', on);
   if (on) {
     state.eqEnabled = true;
@@ -766,6 +783,7 @@ function bindEvents() {
     toggleEqPanel();
   });
   dom.eqClose.addEventListener('click', () => toggleEqPanel(false));
+  dom.eqBackdrop?.addEventListener('click', () => toggleEqPanel(false));
   dom.eqReset.addEventListener('click', resetEq);
 
   dom.audio.addEventListener('timeupdate', () => {

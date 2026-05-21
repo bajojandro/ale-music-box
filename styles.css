@@ -26,9 +26,7 @@
 
   --top-bar-height: calc(52px + env(safe-area-inset-top, 0px));
   /* Altura real del reproductor (título + barra + botones); si es baja, el EQ queda tapado */
-  --player-bar-height: calc(178px + env(safe-area-inset-bottom, 0px));
-  --eq-player-gap: 16px;
-  --eq-panel-height: 300px;
+  --player-bar-height: calc(132px + env(safe-area-inset-bottom, 0px));
   --touch-min: 44px;
 
   font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -258,13 +256,6 @@ img {
   min-height: 100dvh;
   padding-top: var(--top-bar-height);
   padding-bottom: calc(var(--player-bar-height) + env(safe-area-inset-bottom, 0px));
-}
-
-.app.eq-open {
-  padding-bottom: calc(
-    var(--player-bar-height) + var(--eq-player-gap) + var(--eq-panel-height) +
-      env(safe-area-inset-bottom, 0px)
-  );
 }
 
 /* Top bar — una fila: temas | título | buscador */
@@ -614,33 +605,31 @@ img {
   font-weight: 600;
 }
 
-/* Ecualizador — hoja sobre el reproductor, separada para no tapar faders */
-.eq-panel {
+/* Ecualizador — tarjeta flotante arriba (no toca el reproductor) */
+.eq-backdrop {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--player-bar-height) + env(safe-area-inset-bottom, 0px));
-  z-index: 90;
-  padding: 0;
-  border-top: 1px solid var(--color-outline);
-  box-shadow: var(--md-elevation-3);
-  visibility: hidden;
-  pointer-events: none;
+  inset: 0;
+  z-index: 125;
+  background: color-mix(in srgb, var(--color-on-surface) 35%, transparent);
+  backdrop-filter: blur(2px);
 }
 
-.app.eq-open .eq-panel {
-  visibility: visible;
-  pointer-events: auto;
-  z-index: 120;
-  bottom: calc(
-    var(--player-bar-height) + var(--eq-player-gap) + env(safe-area-inset-bottom, 0px)
-  );
-  min-height: var(--eq-panel-height);
-  max-height: min(52dvh, 340px);
+.eq-panel {
+  position: fixed;
+  z-index: 130;
+  top: calc(var(--top-bar-height) + 10px);
+  left: 12px;
+  right: 12px;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 0;
+  border: 1px solid var(--color-outline);
+  border-radius: var(--md-radius-xl);
+  box-shadow: var(--md-elevation-3);
+  max-height: min(58dvh, 360px);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  border-radius: var(--md-radius-xl) var(--md-radius-xl) 0 0;
 }
 
 .eq-header {
@@ -648,11 +637,12 @@ img {
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
-  padding: 12px 12px 0;
+  padding: 14px 14px 0;
   position: sticky;
   top: 0;
   z-index: 1;
   background: var(--color-surface);
+  border-radius: var(--md-radius-xl) var(--md-radius-xl) 0 0;
 }
 
 .eq-header h2 {
@@ -660,7 +650,7 @@ img {
   font-size: 0.95rem;
 }
 
-.app.eq-open #eq-close {
+#eq-close {
   width: var(--touch-min);
   height: var(--touch-min);
   flex-shrink: 0;
@@ -672,7 +662,7 @@ img {
   justify-content: space-between;
   gap: 6px;
   overflow-x: auto;
-  padding: 8px 12px 28px;
+  padding: 8px 14px 20px;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -762,26 +752,6 @@ img {
   bottom: 0;
   z-index: 110;
   padding: 8px 12px max(8px, env(safe-area-inset-bottom));
-}
-
-.app.eq-open .player-bar {
-  box-shadow: var(--md-elevation-1);
-}
-
-.app.eq-open .player-error {
-  display: none;
-}
-
-.app.eq-open .player-now-playing {
-  margin-bottom: 4px;
-}
-
-.app.eq-open .player-title {
-  -webkit-line-clamp: 1;
-}
-
-.app.eq-open .player-artist {
-  display: none;
 }
 
 .player-now-playing {
@@ -911,7 +881,7 @@ img {
 @media (min-width: 600px) {
   :root {
     --top-bar-height: calc(52px + env(safe-area-inset-top, 0px));
-    --player-bar-height: calc(168px + env(safe-area-inset-bottom, 0px));
+    --player-bar-height: calc(148px + env(safe-area-inset-bottom, 0px));
   }
 
   .top-bar {
