@@ -16,7 +16,7 @@ const B2_ACCOUNTS = ['1'];
 
 /** Se rellena al entrar, leyendo B2 vía Worker /list-library */
 let MUSIC_LIBRARY = [];
-const ACCESS_PASSWORD = 'AleMusic2026';
+const ACCESS_PASSWORD = '5112';
 const SESSION_KEY = 'aleMusicBox_auth';
 const THEME_KEY = 'aleMusicBox_theme';
 const EQ_KEY = 'aleMusicBox_eq';
